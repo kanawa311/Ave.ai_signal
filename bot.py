@@ -8,19 +8,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_ID = int(os.environ.get('TELEGRAM_API_ID', 0))
-API_HASH = os.environ.get('TELEGRAM_API_HASH', '')
-SESSION_STRING = os.environ.get('TELEGRAM_SESSION_STRING', '')
-TRADING_BOT = os.environ.get('TRADING_BOT_USERNAME', '@trojan_on_solana')
+# INJIN WANKI: Wannan zai goge duk wani boyayyen harafi daga Environment Variables dinka
+def clean_key(key_name, default_val=''):
+    val = os.environ.get(key_name, default_val)
+    return str(val).replace('\u200e', '').replace('\u200f', '').strip()
 
-AVE_UDID = os.environ.get('AVE_UDID', '')
-X_AUTH = os.environ.get('X_AUTH_TOKEN', '')
+API_ID = int(clean_key('TELEGRAM_API_ID', '0'))
+API_HASH = clean_key('TELEGRAM_API_HASH')
+SESSION_STRING = clean_key('TELEGRAM_SESSION_STRING')
+TRADING_BOT = clean_key('TRADING_BOT_USERNAME', '@trojan_on_solana')
+
+AVE_UDID = clean_key('AVE_UDID')
+X_AUTH = clean_key('X_AUTH_TOKEN')
 
 client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 
 AVE_API_URL = "https://primpom.com/v2api/signals/v2/public/list/v2?pageNO=1&pageSize=20&chain=solana"
 
-# Zamu rika ajiye CA din a nan
 seen_tokens = set()
 
 async def handle_web_request(request):
@@ -51,7 +55,6 @@ def get_headers():
 async def fetch_and_send_signals():
     print("🚀 An fara farautar CA (An sa kariyar kar ya sayi tsofaffi!)...")
     
-    # SABON GYARA: Wannan shine mai tsaron asusunka!
     is_first_run = True 
     
     async with httpx.AsyncClient() as http_client:
@@ -67,25 +70,20 @@ async def fetch_and_send_signals():
                         token_address = signal.get("token") or signal.get("address")
                         
                         if token_address and token_address not in seen_tokens:
-                            # Ajiye CA din a memory nan take
                             seen_tokens.add(token_address)
                             
-                            # GYARA: Zai tura CA KAWAI idan ba zagaye na farko bane
                             if not is_first_run:
                                 print(f"🚨 SABO: {token_address}")
                                 await client.send_message(TRADING_BOT, token_address)
                                 print(f"✅ An aika CA zuwa {TRADING_BOT}")
                                 await asyncio.sleep(0.5)
                     
-                    # Da zaran ya gama karanta zagayen farko, zai kashe is_first_run
                     if is_first_run:
                         print("🛡️ An kwashe tsofaffin tokens an sa a memory. Yanzu zai jira sabbi kawai...")
                         is_first_run = False
                             
-                    # Hanawa memory cikawa (Zai goge tsofaffi idan sun kai 1000)
                     if len(seen_tokens) > 1000:
                         seen_tokens.clear()
-                        # Zamu sake kunna kariyar is_first_run idan memory ya goge don kar ya sake turo tsofaffi
                         is_first_run = True 
                         print("🧹 An goge memory don kar ya cika, an sake kunna kariya.")
                         
