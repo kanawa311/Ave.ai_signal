@@ -1,4 +1,4 @@
 telethon
-‎httpx
 ‎python-dotenv
 ‎aiohttp
+httpx
